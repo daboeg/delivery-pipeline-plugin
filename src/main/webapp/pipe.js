@@ -124,6 +124,41 @@ function refreshPipelines(data, divNames, errorDiv, view, showAvatars, showChang
 
                 html.push('<div class="pipeline-row">');
 
+				// HACK for Join plugin
+				// This handles reorganizing the display output so the jobs are linear when
+				// multiple child jobs are present in the "join"
+                for (var j = 0; j < pipeline.stages.length; j++) {
+                    stage = pipeline.stages[j];
+                    if (stage.downstreamStageIds.length>1) {
+                        for (var t = j ; t < pipeline.stages.length; t++) {
+                            t_stage = pipeline.stages[t];
+                            if (t_stage.id == stage.downstreamStageIds[0]) {
+                                if (t_stage.row != stage.row && !t_stage.parentMoved) {
+                                    pipeline.stages.splice(t,0,stage);
+                                    pipeline.stages.splice(j,1);
+                                    stage.row = t_stage.row;
+                                    t_stage.parentMoved=true;
+                                }
+                            }
+                        }
+                    } else {
+                        if (stage.parentMoved) {
+                            for (var t = 0 ; t < pipeline.stages.length; t++) {
+                                t_stage = pipeline.stages[t];
+                                 if (t_stage.id == stage.downstreamStageIds[0]) {
+                                    if (t_stage.row != stage.row) {
+                                        pipeline.stages.splice(j+1,0,t_stage);
+                                        pipeline.stages.splice(t,1);
+                                        t_stage.row = stage.row;
+                                    }
+                                 }
+                             }
+
+                        }
+                    }
+                }
+				// ENDHACK
+				
                 for (var j = 0; j < pipeline.stages.length; j++) {
                     stage = pipeline.stages[j];
                     if (stage.row > row) {
